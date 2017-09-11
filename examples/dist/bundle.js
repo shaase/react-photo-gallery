@@ -38,7 +38,6 @@ emptyFunction.thatReturnsArgument = function (arg) {
 
 module.exports = emptyFunction;
 },{}],2:[function(require,module,exports){
-(function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64,7 +63,7 @@ module.exports = emptyFunction;
 
 var validateFormat = function validateFormat(format) {};
 
-if (process.env.NODE_ENV !== 'production') {
+if ("production" !== 'production') {
   validateFormat = function validateFormat(format) {
     if (format === undefined) {
       throw new Error('invariant requires an error message argument');
@@ -94,9 +93,7 @@ function invariant(condition, format, a, b, c, d, e, f) {
 }
 
 module.exports = invariant;
-}).call(this,require('_process'))
-},{"_process":4}],3:[function(require,module,exports){
-(function (process){
+},{}],3:[function(require,module,exports){
 /**
  * Copyright 2014-2015, Facebook, Inc.
  * All rights reserved.
@@ -120,7 +117,7 @@ var emptyFunction = require('./emptyFunction');
 
 var warning = emptyFunction;
 
-if (process.env.NODE_ENV !== 'production') {
+if ("production" !== 'production') {
   var printWarning = function printWarning(format) {
     for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
       args[_key - 1] = arguments[_key];
@@ -161,195 +158,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 module.exports = warning;
-}).call(this,require('_process'))
-},{"./emptyFunction":1,"_process":4}],4:[function(require,module,exports){
-// shim for using process in browser
-var process = module.exports = {};
-
-// cached from whatever global is present so that test runners that stub it
-// don't break things.  But we need to wrap it in a try catch in case it is
-// wrapped in strict mode code which doesn't define any globals.  It's inside a
-// function because try/catches deoptimize in certain engines.
-
-var cachedSetTimeout;
-var cachedClearTimeout;
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-(function () {
-    try {
-        if (typeof setTimeout === 'function') {
-            cachedSetTimeout = setTimeout;
-        } else {
-            cachedSetTimeout = defaultSetTimout;
-        }
-    } catch (e) {
-        cachedSetTimeout = defaultSetTimout;
-    }
-    try {
-        if (typeof clearTimeout === 'function') {
-            cachedClearTimeout = clearTimeout;
-        } else {
-            cachedClearTimeout = defaultClearTimeout;
-        }
-    } catch (e) {
-        cachedClearTimeout = defaultClearTimeout;
-    }
-} ())
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-
-process.nextTick = function (fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-};
-
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-process.title = 'browser';
-process.browser = true;
-process.env = {};
-process.argv = [];
-process.version = ''; // empty string to avoid regexp issues
-process.versions = {};
-
-function noop() {}
-
-process.on = noop;
-process.addListener = noop;
-process.once = noop;
-process.off = noop;
-process.removeListener = noop;
-process.removeAllListeners = noop;
-process.emit = noop;
-process.prependListener = noop;
-process.prependOnceListener = noop;
-
-process.listeners = function (name) { return [] }
-
-process.binding = function (name) {
-    throw new Error('process.binding is not supported');
-};
-
-process.cwd = function () { return '/' };
-process.chdir = function (dir) {
-    throw new Error('process.chdir is not supported');
-};
-process.umask = function() { return 0; };
-
-},{}],5:[function(require,module,exports){
-(function (process){
+},{"./emptyFunction":1}],4:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -361,7 +170,7 @@ process.umask = function() { return 0; };
 
 'use strict';
 
-if (process.env.NODE_ENV !== 'production') {
+if ("production" !== 'production') {
   var invariant = require('fbjs/lib/invariant');
   var warning = require('fbjs/lib/warning');
   var ReactPropTypesSecret = require('./lib/ReactPropTypesSecret');
@@ -380,7 +189,7 @@ if (process.env.NODE_ENV !== 'production') {
  * @private
  */
 function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
-  if (process.env.NODE_ENV !== 'production') {
+  if ("production" !== 'production') {
     for (var typeSpecName in typeSpecs) {
       if (typeSpecs.hasOwnProperty(typeSpecName)) {
         var error;
@@ -412,8 +221,7 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
 
 module.exports = checkPropTypes;
 
-}).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":9,"_process":4,"fbjs/lib/invariant":2,"fbjs/lib/warning":3}],6:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":8,"fbjs/lib/invariant":2,"fbjs/lib/warning":3}],5:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -474,8 +282,7 @@ module.exports = function() {
   return ReactPropTypes;
 };
 
-},{"./lib/ReactPropTypesSecret":9,"fbjs/lib/emptyFunction":1,"fbjs/lib/invariant":2}],7:[function(require,module,exports){
-(function (process){
+},{"./lib/ReactPropTypesSecret":8,"fbjs/lib/emptyFunction":1,"fbjs/lib/invariant":2}],6:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -624,7 +431,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
   PropTypeError.prototype = Error.prototype;
 
   function createChainableTypeChecker(validate) {
-    if (process.env.NODE_ENV !== 'production') {
+    if ("production" !== 'production') {
       var manualPropTypeCallCache = {};
       var manualPropTypeWarningCount = 0;
     }
@@ -641,7 +448,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
             'Use `PropTypes.checkPropTypes()` to call them. ' +
             'Read more at http://fb.me/use-check-prop-types'
           );
-        } else if (process.env.NODE_ENV !== 'production' && typeof console !== 'undefined') {
+        } else if ("production" !== 'production' && typeof console !== 'undefined') {
           // Old behavior for people using React.PropTypes
           var cacheKey = componentName + ':' + propName;
           if (
@@ -751,7 +558,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
   function createEnumTypeChecker(expectedValues) {
     if (!Array.isArray(expectedValues)) {
-      process.env.NODE_ENV !== 'production' ? warning(false, 'Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
+      "production" !== 'production' ? warning(false, 'Invalid argument supplied to oneOf, expected an instance of array.') : void 0;
       return emptyFunction.thatReturnsNull;
     }
 
@@ -794,7 +601,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 
   function createUnionTypeChecker(arrayOfTypeCheckers) {
     if (!Array.isArray(arrayOfTypeCheckers)) {
-      process.env.NODE_ENV !== 'production' ? warning(false, 'Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
+      "production" !== 'production' ? warning(false, 'Invalid argument supplied to oneOfType, expected an instance of array.') : void 0;
       return emptyFunction.thatReturnsNull;
     }
 
@@ -989,9 +796,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
   return ReactPropTypes;
 };
 
-}).call(this,require('_process'))
-},{"./checkPropTypes":5,"./lib/ReactPropTypesSecret":9,"_process":4,"fbjs/lib/emptyFunction":1,"fbjs/lib/invariant":2,"fbjs/lib/warning":3}],8:[function(require,module,exports){
-(function (process){
+},{"./checkPropTypes":4,"./lib/ReactPropTypesSecret":8,"fbjs/lib/emptyFunction":1,"fbjs/lib/invariant":2,"fbjs/lib/warning":3}],7:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -1001,7 +806,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
  * of patent rights can be found in the PATENTS file in the same directory.
  */
 
-if (process.env.NODE_ENV !== 'production') {
+if ("production" !== 'production') {
   var REACT_ELEMENT_TYPE = (typeof Symbol === 'function' &&
     Symbol.for &&
     Symbol.for('react.element')) ||
@@ -1023,8 +828,7 @@ if (process.env.NODE_ENV !== 'production') {
   module.exports = require('./factoryWithThrowingShims')();
 }
 
-}).call(this,require('_process'))
-},{"./factoryWithThrowingShims":6,"./factoryWithTypeCheckers":7,"_process":4}],9:[function(require,module,exports){
+},{"./factoryWithThrowingShims":5,"./factoryWithTypeCheckers":6}],8:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -1041,183 +845,192 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 module.exports = ReactPropTypesSecret;
 
 },{}],"react-photo-gallery":[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
-	value: true
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
 
 var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var _react = require('react');
+var _react = require("react");
 
 var _react2 = _interopRequireDefault(_react);
 
-var _propTypes = require('prop-types');
+var _propTypes = require("prop-types");
 
 var _propTypes2 = _interopRequireDefault(_propTypes);
 
 var Gallery = (function (_React$Component) {
-	_inherits(Gallery, _React$Component);
+  _inherits(Gallery, _React$Component);
 
-	function Gallery() {
-		_classCallCheck(this, Gallery);
+  function Gallery() {
+    _classCallCheck(this, Gallery);
 
-		_get(Object.getPrototypeOf(Gallery.prototype), 'constructor', this).call(this);
-		this.state = {
-			containerWidth: 0
-		};
-		this.handleResize = this.handleResize.bind(this);
-	}
+    _get(Object.getPrototypeOf(Gallery.prototype), "constructor", this).call(this);
+    this.state = {
+      containerWidth: 0
+    };
+    this.handleResize = this.handleResize.bind(this);
+  }
 
-	_createClass(Gallery, [{
-		key: 'componentDidMount',
-		value: function componentDidMount() {
-			this.setState({ containerWidth: Math.floor(this._gallery.clientWidth) });
-			window.addEventListener('resize', this.handleResize);
-		}
-	}, {
-		key: 'componentDidUpdate',
-		value: function componentDidUpdate() {
-			if (this._gallery.clientWidth !== this.state.containerWidth) {
-				this.setState({ containerWidth: Math.floor(this._gallery.clientWidth) });
-			}
-		}
-	}, {
-		key: 'componentWillUnmount',
-		value: function componentWillUnmount() {
-			window.removeEventListener('resize', this.handleResize, false);
-		}
-	}, {
-		key: 'handleResize',
-		value: function handleResize(e) {
-			this.setState({ containerWidth: Math.floor(this._gallery.clientWidth) });
-		}
-	}, {
-		key: 'aspectRatio',
-		value: function aspectRatio(_ref) {
-			var width = _ref.width;
-			var height = _ref.height;
+  _createClass(Gallery, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      this.setState({ containerWidth: Math.floor(this._gallery.clientWidth) });
+      window.addEventListener("resize", this.handleResize);
+    }
+  }, {
+    key: "componentDidUpdate",
+    value: function componentDidUpdate() {
+      if (this._gallery.clientWidth !== this.state.containerWidth) {
+        this.setState({ containerWidth: Math.floor(this._gallery.clientWidth) });
+      }
+    }
+  }, {
+    key: "componentWillUnmount",
+    value: function componentWillUnmount() {
+      window.removeEventListener("resize", this.handleResize, false);
+    }
+  }, {
+    key: "handleResize",
+    value: function handleResize(e) {
+      this.setState({ containerWidth: Math.floor(this._gallery.clientWidth) });
+    }
+  }, {
+    key: "aspectRatio",
+    value: function aspectRatio(_ref) {
+      var width = _ref.width;
+      var height = _ref.height;
 
-			return width / height;
-		}
-	}, {
-		key: 'scalePhotoDimensions',
-		value: function scalePhotoDimensions() {
-			var _this = this;
+      return width / height;
+    }
+  }, {
+    key: "scalePhotoDimensions",
+    value: function scalePhotoDimensions() {
+      var _this = this;
 
-			var _props = this.props;
-			var cols = _props.cols;
-			var margin = _props.margin;
-			var photos = _props.photos;
+      var _props = this.props;
+      var cols = _props.cols;
+      var margin = _props.margin;
+      var photos = _props.photos;
 
-			// subtract 1 pixel because the browser may round up a pixel
-			var containerWidth = this.state.containerWidth - 1;
+      // subtract 1 pixel because the browser may round up a pixel
+      var containerWidth = this.state.containerWidth - 1;
 
-			// divide photos in rows based on cols per row [[1,2,3],[4,5,6],[7,8]]]
-			var rows = photos.reduce(function (acc, item, idx) {
-				var rowNum = Math.floor(idx / cols);
-				acc[rowNum] = acc[rowNum] ? [].concat(_toConsumableArray(acc[rowNum]), [item]) : [item];
-				return acc;
-			}, []);
+      // divide photos in rows based on cols per row [[1,2,3],[4,5,6],[7,8]]]
+      var rows = photos.reduce(function (acc, item, idx) {
+        var rowNum = Math.floor(idx / cols);
+        acc[rowNum] = acc[rowNum] ? [].concat(_toConsumableArray(acc[rowNum]), [item]) : [item];
+        return acc;
+      }, []);
 
-			// scale the image dimensions
-			rows = rows.map(function (row) {
-				var totalAspectRatio = row.reduce(function (acc, photo, idx) {
-					return acc + _this.aspectRatio(photo);
-				}, 0);
-				// calculate the width differently if its the last row and there are fewer photos left than col num
-				var rowWidth = row.length < cols ? Math.floor(containerWidth / cols * row.length - row.length * (margin * 2)) : Math.floor(containerWidth - row.length * (margin * 2));
-				var rowHeight = rowWidth / totalAspectRatio;
-				return row.map(function (photo) {
-					return _extends({}, photo, {
-						width: rowHeight * _this.aspectRatio(photo),
-						height: rowHeight
-					});
-				});
-			});
+      // scale the image dimensions
+      rows = rows.map(function (row) {
+        var totalAspectRatio = row.reduce(function (acc, photo, idx) {
+          return acc + _this.aspectRatio(photo);
+        }, 0);
+        // calculate the width differently if its the last row and there are fewer photos left than col num
+        var rowWidth = row.length < cols ? Math.floor(containerWidth / cols * row.length - row.length * (margin * 2)) : Math.floor(containerWidth - row.length * (margin * 2));
+        var rowHeight = rowWidth / totalAspectRatio;
+        return row.map(function (photo) {
+          return _extends({}, photo, {
+            width: rowHeight * _this.aspectRatio(photo),
+            height: rowHeight
+          });
+        });
+      });
 
-			// flatten back the photos array
-			return rows.reduce(function (acc, row) {
-				return [].concat(_toConsumableArray(acc), _toConsumableArray(row));
-			}, []);
-		}
-	}, {
-		key: 'render',
-		value: function render() {
-			var _this2 = this;
+      // flatten back the photos array
+      return rows.reduce(function (acc, row) {
+        return [].concat(_toConsumableArray(acc), _toConsumableArray(row));
+      }, []);
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this2 = this;
 
-			var resizedPhotos = this.scalePhotoDimensions();
-			style.margin = this.props.margin;
-			return _react2['default'].createElement(
-				'div',
-				{ id: 'Gallery', className: 'clearfix', ref: function (c) {
-						return _this2._gallery = c;
-					} },
-				resizedPhotos.map(function (photo, idx) {
-					return _react2['default'].createElement(
-						'div',
-						{ style: style, key: idx },
-						_react2['default'].createElement(
-							'a',
-							{ href: '#', onClick: function (e) {
-									return _this2.props.onClickPhoto(idx, e);
-								} },
-							_react2['default'].createElement('img', { src: photo.src, srcSet: photo.srcset.join(), sizes: photo.sizes.join(), style: { display: 'block', border: 0 }, height: photo.height, width: photo.width, alt: photo.alt })
-						)
-					);
-				})
-			);
-		}
-	}]);
+      var resizedPhotos = this.scalePhotoDimensions();
+      style.margin = this.props.margin;
+      return _react2["default"].createElement(
+        "div",
+        { id: "Gallery", className: "clearfix", ref: function (c) {
+            return _this2._gallery = c;
+          } },
+        resizedPhotos.map(function (photo, idx) {
+          var srcset = photo.srcset !== undefined ? photo.srcset.join : [];
+          var sizes = photo.sizes !== undefined ? photo.sizes.join : [];
+          return _react2["default"].createElement(
+            "div",
+            { style: style, key: idx },
+            _react2["default"].createElement(
+              "a",
+              { href: "#", onClick: function (e) {
+                  return _this2.props.onClickPhoto(idx, e);
+                } },
+              _react2["default"].createElement("img", {
+                src: photo.src,
+                srcSet: srcset,
+                sizes: sizes,
+                style: { display: "block", border: 0 },
+                height: photo.height,
+                width: photo.width,
+                alt: photo.alt
+              })
+            )
+          );
+        })
+      );
+    }
+  }]);
 
-	return Gallery;
-})(_react2['default'].Component);
+  return Gallery;
+})(_react2["default"].Component);
 
-;
-Gallery.displayName = 'Gallery';
+Gallery.displayName = "Gallery";
 Gallery.propTypes = {
-	photos: function photos(props, propName, componentName) {
-		return _propTypes2['default'].arrayOf(_propTypes2['default'].shape({
-			src: _propTypes2['default'].string.isRequired,
-			width: _propTypes2['default'].number.isRequired,
-			height: _propTypes2['default'].number.isRequired,
-			alt: _propTypes2['default'].string,
-			srcset: _propTypes2['default'].array,
-			sizes: _propTypes2['default'].array
-		})).isRequired.apply(this, arguments);
-	},
-	onClickPhoto: _propTypes2['default'].func,
-	cols: _propTypes2['default'].number,
-	margin: _propTypes2['default'].number
+  photos: function photos(props, propName, componentName) {
+    return _propTypes2["default"].arrayOf(_propTypes2["default"].shape({
+      src: _propTypes2["default"].string.isRequired,
+      width: _propTypes2["default"].number.isRequired,
+      height: _propTypes2["default"].number.isRequired,
+      alt: _propTypes2["default"].string,
+      srcset: _propTypes2["default"].array,
+      sizes: _propTypes2["default"].array
+    })).isRequired.apply(this, arguments);
+  },
+  onClickPhoto: _propTypes2["default"].func,
+  cols: _propTypes2["default"].number,
+  margin: _propTypes2["default"].number
 };
 Gallery.defaultProps = {
-	cols: 3,
-	onClickPhoto: function onClickPhoto(k, e) {
-		e.preventDefault();
-	},
-	margin: 2
+  cols: 3,
+  onClickPhoto: function onClickPhoto(k, e) {
+    e.preventDefault();
+  },
+  margin: 2
 };
 // Gallery image style
 var style = {
-	display: 'block',
-	backgroundColor: '#e3e3e3',
-	float: 'left'
+  display: "block",
+  backgroundColor: "#e3e3e3",
+  float: "left"
 };
 
-exports['default'] = Gallery;
-module.exports = exports['default'];
+exports["default"] = Gallery;
+module.exports = exports["default"];
 
-},{"prop-types":8,"react":undefined}]},{},[]);
+},{"prop-types":7,"react":undefined}]},{},[]);
